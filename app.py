@@ -11,7 +11,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 def ask_gemini(full_text):
     payload = { "contents":[{"parts":[{"text": full_text}]}] }
     res = requests.post(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
         headers={"Content-Type":"application/json","X-goog-api-key":GEMINI_API_KEY},
         json=payload
     )
