@@ -6,7 +6,6 @@ import requests
 app = Flask(__name__)
 CORS(app)
 
-# Render handles environment variables automatically!
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 def ask_gemini(full_text):
@@ -16,8 +15,9 @@ def ask_gemini(full_text):
         ]
     }
 
-    # RECOMMENDED: v1beta is often more reliable for Flash 1.5 free keys
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    # CHANGE: Switched to gemini-2.0-flash-exp (Experimental/New)
+    # This often bypasses the 404 'Not Found' error on newer accounts
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={GEMINI_API_KEY}"
 
     headers = {
         "Content-Type": "application/json"
@@ -25,9 +25,14 @@ def ask_gemini(full_text):
 
     response = requests.post(url, headers=headers, json=payload)
 
-    # This prints the EXACT reason for a 404 to your Render logs
     if response.status_code != 200:
         print(f"DEBUG: Google API Error ({response.status_code}): {response.text}")
+        
+        # SECOND ATTEMPT: If 2.0 fails, try the absolute basic version
+        if response.status_code == 404:
+            print("Retrying with gemini-pro...")
+            url_fallback = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_API_KEY}"
+            response = requests.post(url_fallback, headers=headers, json=payload)
 
     response.raise_for_status()
     data = response.json()
@@ -50,6 +55,5 @@ def chatbot():
         return jsonify({"reply": f"Error: {str(e)}"}), 500
 
 if __name__ == "__main__":
-    # Render uses port 10000 by default, this line handles that
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
